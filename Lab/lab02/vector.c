@@ -22,7 +22,7 @@ static void allocation_failed() {
 vector_t *bad_vector_new() {
     /* Create the vector and a pointer to it */
     vector_t *retval, v;
-    retval = &v;
+    retval = &v; // this may be wrong because the v is a 局部变量,在函数返回后这个指针就是悬空指针很危险。
 
     /* Initialize attributes */
     retval->size = 1;
@@ -47,8 +47,8 @@ vector_t also_bad_vector_new() {
         allocation_failed();
     }
     v.data[0] = 0;
-    return v;
-}
+    return v; 
+} 
 
 /* Create a new vector with a size (length) of 1
    and set its single component to zero... the
@@ -58,27 +58,27 @@ vector_t *vector_new() {
     vector_t *retval;
 
     /* First, we need to allocate memory on the heap for the struct */
-    retval = /* YOUR CODE HERE */
+    retval = malloc(sizeof(vector_t));
 
     /* Check our return value to make sure we got memory */
-    if (/* YOUR CODE HERE */) {
+    if (retval == NULL) {
         allocation_failed();
     }
 
     /* Now we need to initialize our data.
        Since retval->data should be able to dynamically grow,
        what do you need to do? */
-    retval->size = /* YOUR CODE HERE */;
-    retval->data = /* YOUR CODE HERE */;
+    retval->size = 1;
+    retval->data = malloc(sizeof(int));
 
     /* Check the data attribute of our vector to make sure we got memory */
-    if (/* YOUR CODE HERE */) {
+    if (retval->data == NULL) {
         free(retval);				//Why is this line necessary?
         allocation_failed();
     }
 
     /* Complete the initialization by setting the single component to zero */
-    /* YOUR CODE HERE */ = 0;
+    retval->data[0] = 0;
 
     /* and return... */
     return retval;
@@ -96,8 +96,8 @@ int vector_get(vector_t *v, size_t loc) {
     /* If the requested location is higher than we have allocated, return 0.
      * Otherwise, return what is in the passed location.
      */
-    if (loc < /* YOUR CODE HERE */) {
-        return /* YOUR CODE HERE */;
+    if (loc < v->size) {
+        return v->data[loc];
     } else {
         return 0;
     }
@@ -107,6 +107,9 @@ int vector_get(vector_t *v, size_t loc) {
    Remember, you need to free up ALL the memory that was allocated. */
 void vector_delete(vector_t *v) {
     /* YOUR SOLUTION HERE */
+    // first free the data
+    free(v->data);
+    free(v);
 }
 
 /* Set a value in the vector. If the extra memory allocation fails, call
@@ -117,4 +120,30 @@ void vector_set(vector_t *v, size_t loc, int value) {
      */
 
     /* YOUR SOLUTION HERE */
+    if(v==NULL){
+        fprintf(stderr, "vector_set: passed a NULL vector.\n");
+        abort();
+    }
+    int size = v->size;
+    if(loc < size){
+        v->data[loc] = value;
+    }else{
+        // 需要扩大data
+        int new_size = loc + 1;
+
+        int * p = malloc(sizeof(int)*new_size);
+        if(p == NULL){
+            allocation_failed();
+        }
+        for(int i=0;i<v->size;i++){
+            p[i] = v->data[i];
+        }
+        for(int i=v->size;i<loc;i++){
+            p[i] = 0;
+        }
+        p[loc] = value;
+        free(v->data);
+        v->size = new_size;
+        v->data = p;
+    }
 }

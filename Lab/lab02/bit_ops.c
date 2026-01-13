@@ -9,7 +9,8 @@ unsigned get_bit(unsigned x,
     // Returning -1 is a placeholder (it makes
     // no sense, because get_bit only returns 
     // 0 or 1)
-    return -1;
+    int bit = (x >> n) & 1;
+    return bit;
 }
 // Set the nth bit of the value of x to v.
 // Assume 0 <= n <= 31, and v is 0 or 1
@@ -17,11 +18,23 @@ void set_bit(unsigned * x,
              unsigned n,
              unsigned v) {
     // YOUR CODE HERE
+    int num = 1 << n;
+    if (v==0){
+        *x = *x & (~num);
+    }else{
+        *x = *x | num;
+    }
 }
 // Flip the nth bit of the value of x.
 // Assume 0 <= n <= 31
 void flip_bit(unsigned * x,
               unsigned n) {
     // YOUR CODE HERE
+    int num = get_bit(*x,n);
+    if (num==0){
+        set_bit(x,n,1);
+    }else{
+        set_bit(x,n,0);
+    }
 }
 
