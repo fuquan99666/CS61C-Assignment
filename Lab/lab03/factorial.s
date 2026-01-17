@@ -22,3 +22,24 @@ main:
 
 factorial:
     # YOUR CODE HERE
+    addi sp , sp ,-4
+    sw ra,0(sp)
+    addi t0,x0,1
+    beq a0,t0,base
+    
+    addi sp,sp ,-4
+    sw a0,0(sp)
+    addi a0,a0,-1
+    jal ra , factorial
+    lw t0,0(sp)
+    addi sp,sp,4
+    mul a0,a0,t0
+
+exit:
+    lw ra,0(sp)
+    addi sp,sp,4
+    jr ra
+    
+base:
+    addi a0,x0,1
+    j exit
