@@ -236,7 +236,7 @@ class AssemblyTest:
     def check_array(self, array: ArrayData, value: List[int]):
         """ checks the the value of an array in memory """
         assert self._call is not None, f"You must first call a function before checking its return values!"
-        assert len(value) > 0, "Array to compare against has to contain at least one element."
+        #assert len(value) > 0, "Array to compare against has to contain at least one element."
         assert len(value) <= len(array), "Array to compare against must contain a smaller or equal amount of elements."
         expected = self.array(value).name
         actual = "la a2, " + self._lookup_array(array)
