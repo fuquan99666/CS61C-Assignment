@@ -252,3 +252,10 @@ $RECYCLE.BIN/
 # lab13 program
 server_basic server_process
 **/*._sobel.bmp
+
+cpu/branch_comp2.circ
+cpu/control_logic2.circ
+cpu/cpu2.circ
+cpu/csr2.circ
+cpu/imm_gen2.circ
+cpu/imm_gen2.circ

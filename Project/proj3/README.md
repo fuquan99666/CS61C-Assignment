@@ -29,6 +29,7 @@ java -jar ./logisim-evolution.jar
 
 
 ### Note
+#### PART A
 - 当前已经完成了part A的部分，客观而言，虽然还没有完成part B,但是我能感受到这个project的任务量非常大。
 对于part A来说alu的实现还算好的，regfile的实现简直要命，32个register,可想而知连线的困难。。。
 cpu部分由于测试文件较多，并且各部分之间关系复杂，在动手之前最好理清run.circ,test_harness.circ,cpu.circ之间的关系。
