@@ -33,3 +33,6 @@ java -jar ./logisim-evolution.jar
 - 当前已经完成了part A的部分，客观而言，虽然还没有完成part B,但是我能感受到这个project的任务量非常大。
 对于part A来说alu的实现还算好的，regfile的实现简直要命，32个register,可想而知连线的困难。。。
 cpu部分由于测试文件较多，并且各部分之间关系复杂，在动手之前最好理清run.circ,test_harness.circ,cpu.circ之间的关系。
+
+#### PartB
+- ok,兄弟们，写了一篇[博客](https://fuquan99666.github.io/p/cs61c_12-project-3-%E5%8F%A4%E6%B3%95%E7%BC%96%E7%A8%8Bcpu/)记录我的实现思路和一些理解，直接看这个吧。
