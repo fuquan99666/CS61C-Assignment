@@ -1,24 +1,25 @@
 Scenario 1
-    1.
-    2.
-    3.
+    1. step_size * 4 = block_size * block_nums = cache_size => hit rate = 0.0 
+    2. 0.0
+    3. we can change the block_nums to 16 and hit rate -> 0.875 (repcount = 8)
+
 
 Scenario 2
-    1.
-    2.
-    3.
+    1. 128 memory read.
+    2. Pattern : MHHH 
+    3. hit rate -> 1.0
 
 Scenario 3
-    1.
-    2.
-    3.
-    4.
-    5.
+    1. L1: 0.5, L2: 0, Overall: 0.5
+    2. For L1 cache, access 32 times, 16 hits, 16 misses.
+    3. For L2 cache, access 16 times, 0 hits, 16 misses.
+    4. add repcount can improve the hit rate of L2 cache, but not effect L1 hit rate, bebcause L2 cache size is same as array size.
+    5. =,=,+,=
 
 --- lines below are ignored by the AG ---
 
-Checkoff Question 1:
-Checkoff Question 2:
-Checkoff Question 3:
-Checkoff Question 4:
-Checkoff Question 5:
+Checkoff Question 1: if the reason in 1, enhancing the repcount will not change the hit rate, always conflict miss.
+Checkoff Question 2: we can't change the max array size(2048 bytes)
+Checkoff Question 3: Think by yourself.
+Checkoff Question 4: Think by yourself.
+Checkoff Question 5: Use trunks.

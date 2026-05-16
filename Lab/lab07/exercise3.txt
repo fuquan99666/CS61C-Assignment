@@ -7,8 +7,8 @@ Part 1
     blocksize = 20, n = 5000: 
     blocksize = 20, n = 10000: 
 
-    Checkoff Question 1:
-    Checkoff Question 2:
+    Checkoff Question 1: No one is faster than naive version...
+    Checkoff Question 2: Because when matrix size is small, the whole matrix can fit in cache, we don't need to block.
 
 Part 2
     blocksize = 50, n = 10000:
@@ -17,4 +17,4 @@ Part 2
     blocksize = 1000, n = 10000:
     blocksize = 5000, n = 10000:
 
-    Checkoff Question 3:
+    Checkoff Question 3: When blocksize bigger, the performance firstly better, then worse.

@@ -1,8 +1,8 @@
-1.
-2.
+1. jki:7.444, kji:2.092. 
+2. ikj,kij.  
 
 --- lines below are ignored by the AG ---
 
-Checkoff Question 1:
-Checkoff Question 2:
-Checkoff Question 3:
+Checkoff Question 1: jki的内层循环stride是1,1,0； kjk的内层循环也是。
+Checkoff Question 2: n,n,0 ; n,n,0.
+Checkoff Question 3: 内层循环的stride越大，cache miss越多，性能越差。
