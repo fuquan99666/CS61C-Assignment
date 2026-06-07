@@ -1,19 +1,20 @@
 Exercise 1:
-    1.
-    2.
-    3.
+    1. 在这个模型中，offset有5位，所以一个page是32bytes,即一个page是8个word.
+    2. 在随机生成的访存序列下，TLB Hits=4, TLB Misses=6, Page Hits=0, Page Misses=6.
+    3. NO Page Hits, 因为Physical Memory只有4个page,如果发生了page hit,那么一定是在4个TLB之外的已经分配的page,然而4个TLB已经占满了所有的Physical Memory page，所以不可能。所以无论如何生成访存序列，Page Hits都不可能发生。
 
 Exercise 2:
-    1.
+    1. 00 20 40 60 80 A0 C0 E0 00 20 
 
 Exercise 3:
-    1.
+    1. Physical Memory Size
 
 --- lines below are ignored by the AG ---
 
 Exercise 1 Checkoff Questions:
-    1.
-    2.
+    1. 将Virtual Address转化为Physical Address的第一步是将Virtual Address分为两部分：VPN（Virtual Page Number）和Offset。VPN用于在TLB中查找对应的PPN（Physical Page Number），如果TLB Miss，则需要访问Page Table来获取PPN。如果Page Table Miss，则需要从磁盘加载页面到物理内存，并更新Page Table和TLB。
+    2. 为什么物理地址只有2位的PPN而虚拟地址有3位的VPN？因为物理内存实际有上限4个page,而虚拟内存无所谓上限，所以虚拟地址的VPN可以有更多的位数来表示更多的页面。
 
 Exercise 4 Checkoff Question:
-    1.
+    1. 在这个VMS模拟器中，存在4个程序P1,P2,P3,P4,交替进行，但是TLB和Page Table是共享的，当不同程序进行切换时，
+    TLB和Page Table内容刷新，导致每次都要重新预热缓存和页表，所以TLB miss居高不下。（还有就是TLB size / page size 太小了，如果是随机访存的话，TLB命中概率自然小）
