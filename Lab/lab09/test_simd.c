@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
 	printf("Starting randomized unrolled sum.\n");
 	printf("Sum: %lld\n", sum_unrolled(vals));
 
+	printf("Starting randomized unrolled optimal sum.\n");
+	printf("Sum: %lld\n", sum_unrolled_optimal(vals));
+
 	printf("Starting randomized SIMD sum.\n");
 	start = clock();
 	simd = sum_simd(vals);

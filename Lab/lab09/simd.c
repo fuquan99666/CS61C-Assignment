@@ -45,6 +45,37 @@ long long int sum_unrolled(int vals[NUM_ELEMS]) {
 	return sum;
 }
 
+long long int sum_unrolled_optimal(int vals[NUM_ELEMS]) {
+	clock_t start = clock();
+	long long int sum = 0;
+
+	for(unsigned int w = 0; w < OUTER_ITERATIONS; w++) {
+
+		long long int sum1=0, sum2=0, sum3=0, sum4=0;
+
+		for(unsigned int i = 0; i < NUM_ELEMS / 4 * 4; i += 4) {
+			if(vals[i] >= 128) sum1 += vals[i];
+			if(vals[i + 1] >= 128) sum2 += vals[i + 1];
+			if(vals[i + 2] >= 128) sum3 += vals[i + 2];
+			if(vals[i + 3] >= 128) sum4 += vals[i + 3];
+		}
+
+		//This is what we call the TAIL CASE
+		//For when NUM_ELEMS isn't a multiple of 4
+		//NONTRIVIAL FACT: NUM_ELEMS / 4 * 4 is the largest multiple of 4 less than NUM_ELEMS
+		for(unsigned int i = NUM_ELEMS / 4 * 4; i < NUM_ELEMS; i++) {
+			if (vals[i] >= 128) {
+				sum += vals[i];
+			}
+		}
+		sum += sum1 + sum2 + sum3 + sum4;
+	}
+	clock_t end = clock();
+	printf("Time taken: %Lf s\n", (long double)(end - start) / CLOCKS_PER_SEC);
+	return sum;
+}
+
+
 long long int sum_simd(int vals[NUM_ELEMS]) {
 	clock_t start = clock();
 	__m128i _127 = _mm_set1_epi32(127);		// This is a vector with 127s in it... Why might you need this?

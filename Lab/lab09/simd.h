@@ -10,6 +10,8 @@ long long int sum(int vals[NUM_ELEMS]);
 
 long long int sum_unrolled(int vals[NUM_ELEMS]);
 
+long long int sum_unrolled_optimal(int vals[NUM_ELEMS]);
+
 long long int sum_simd(int vals[NUM_ELEMS]);
 
 long long int sum_simd_unrolled(int vals[NUM_ELEMS]);

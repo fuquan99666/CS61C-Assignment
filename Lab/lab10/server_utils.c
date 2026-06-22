@@ -1,6 +1,10 @@
 #include "server_utils.h"
 #include <unistd.h>
 
+int server_port;
+char *server_files_directory;
+int server_fd;
+
 char *header_tag_left = "<center><h1>";
 char *header_tag_right = "</h1><hr></center>";
 char *content_type = "Content-Type";
@@ -234,7 +238,7 @@ void serve_forever(int *socket_number) {
       perror("Failed to listen on socket");
       exit(errno);
    }
-
+   printf("server_port is %d\n", server_port);
    printf("Listening on port %d...\n", server_port);
 
    while (1) {
@@ -253,12 +257,15 @@ void serve_forever(int *socket_number) {
 #ifdef PROC
       // PART 2 TASK: Implement forking
       /* YOUR CODE HERE */
+      int child_pid = fork();
 
-      if (/* YOUR CODE HERE */) {
+      if (child_pid == 0) {
          // This line kills the child process if parent dies
          int r = prctl(PR_SET_PDEATHSIG, SIGTERM);
 
          /* YOUR CODE HERE */
+
+         dispatch(client_socket_number);
          
          // These lines exit the current process with code 1 
          // 1) when there was an error in prctl, 2) when the parent has been killed
@@ -268,6 +275,8 @@ void serve_forever(int *socket_number) {
          }
 
          /* YOUR CODE HERE */
+
+         exit(0);
       }
 #else
       dispatch(client_socket_number);
