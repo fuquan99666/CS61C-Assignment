@@ -1,0 +1,9 @@
+spark-wc-out-createIndices/
+spark-wc-out-mostPopular/
+spark-wc-out-wordCount/
+spark-wc-out-perWordDocumentCount/
+seqFiles/.The_Call_of_the_wild.txt.seq.crc
+seqFiles/The_Call_of_the_wild.txt.seq
+The_Call_of_the_wild.txt
+.vscode/
+
