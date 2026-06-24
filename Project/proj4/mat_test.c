@@ -165,7 +165,7 @@ void alloc_success_test(void) {
     matrix *mat = NULL;
     CU_ASSERT_EQUAL(allocate_matrix(&mat, 3, 2), 0);
     CU_ASSERT_EQUAL(mat->parent, NULL);
-    CU_ASSERT_EQUAL(mat->ref_cnt, 1);
+    CU_ASSERT_EQUAL(mat->ref_cnt[0], 1);
     CU_ASSERT_EQUAL(mat->rows, 3);
     CU_ASSERT_EQUAL(mat->cols, 2);
     CU_ASSERT_NOT_EQUAL(mat->data, NULL);
@@ -190,7 +190,7 @@ void alloc_ref_test(void) {
     /* 2D slice */
     CU_ASSERT_EQUAL(allocate_matrix_ref(&mat1, from, 1, 0, 2, 2), 0);
     CU_ASSERT_PTR_EQUAL(mat1->parent, from);
-    CU_ASSERT_EQUAL(mat1->parent->ref_cnt, 2);
+    CU_ASSERT_EQUAL(mat1->parent->ref_cnt[0], 2);
     CU_ASSERT_EQUAL(mat1->rows, 2);
     CU_ASSERT_EQUAL(mat1->cols, 2);
     for (int i = 0; i < 2; i++) {
@@ -201,7 +201,7 @@ void alloc_ref_test(void) {
     /* 1D slice */
     CU_ASSERT_EQUAL(allocate_matrix_ref(&mat2, from, 1, 0, 2, 1), 0);
     CU_ASSERT_PTR_EQUAL(mat2->parent, from);
-    CU_ASSERT_EQUAL(mat2->parent->ref_cnt, 3);
+    CU_ASSERT_EQUAL(mat2->parent->ref_cnt[0], 3);
     CU_ASSERT_EQUAL(mat2->rows, 2);
     CU_ASSERT_EQUAL(mat2->cols, 1);
     CU_ASSERT_NOT_EQUAL(mat2->is_1d, 0);
@@ -287,8 +287,8 @@ int main(void) {
     }
 
     // Run all tests using the basic interface
-    CU_basic_set_mode(CU_BRM_NORMAL);
-    // CU_basic_set_mode(CU_BRM_VERBOSE);
+    // CU_basic_set_mode(CU_BRM_NORMAL);
+    CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
     printf("\n");
     CU_basic_show_failures(CU_get_failure_list());

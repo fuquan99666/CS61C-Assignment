@@ -59,6 +59,57 @@ void rand_matrix(matrix *result, unsigned int seed, double low, double high) {
  */
 int allocate_matrix(matrix **mat, int rows, int cols) {
     /* TODO: YOUR CODE HERE */
+    if (rows <= 0 || cols <= 0) {
+        PyErr_SetString(PyExc_ValueError, "Matrix dimensions must be positive.");
+        return -1; // Invalid dimensions 
+    }
+
+    double **data = (double **)malloc(rows * sizeof(double *));
+    if (data == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix data.");
+        return -1; // Memory allocation failed
+    }
+
+    double *block = (double *)calloc(rows * cols, sizeof(double));
+    if (block == NULL) {
+        free(data);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix block.");
+        return -1; // Memory allocation failed
+    }
+
+    for (int i = 0; i < rows; i++) {
+        data[i] = block + i * cols; // Point each row to the correct position in the block
+    }
+
+    *mat = (matrix *)malloc(sizeof(matrix));
+    if (*mat == NULL) {
+        free(data);
+        free(block);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix struct.");
+        return -1; // Memory allocation failed
+    }
+
+    (*mat)->data = data;
+    (*mat)->rows = rows;
+    (*mat)->cols = cols;
+    (*mat)->parent = NULL;
+    (*mat)->is_1d = (rows == 1 || cols == 1) ? 1 : 0;
+    (*mat)->ref_cnt = (int *)malloc(sizeof(int));
+    (*mat)->stride = cols;
+    (*mat)->block = block;
+
+    if ((*mat)->ref_cnt == NULL) {
+        // Free allocated data and matrix struct before returning
+        free(data);
+        free(block);
+        free(*mat);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for reference count.");
+        return -1; // Memory allocation failed
+    }
+
+    (*mat)->ref_cnt[0] = 1; // Initialize reference count to 1
+
+    return 0; // Success
 }
 
 /*
@@ -71,6 +122,41 @@ int allocate_matrix(matrix **mat, int rows, int cols) {
 int allocate_matrix_ref(matrix **mat, matrix *from, int row_offset, int col_offset,
                         int rows, int cols) {
     /* TODO: YOUR CODE HERE */
+    // The new matrix is a slice of the original matrix.
+    
+    if (rows <= 0 || cols <= 0 || row_offset < 0 || col_offset < 0 ||
+        row_offset + rows > from->rows || col_offset + cols > from->cols) {
+        PyErr_SetString(PyExc_ValueError, "Invalid dimensions or offsets for matrix slice.");
+        return -1; // Invalid dimensions or offsets
+    }
+
+    *mat = (matrix *)malloc(sizeof(matrix));
+    if (*mat == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix struct.");
+        return -1; // Memory allocation failed
+    }
+
+    double **data = (double **)malloc(rows * sizeof(double *));
+    if (data == NULL) {
+        free(*mat);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix data.");
+        return -1; // Memory allocation failed
+    }
+
+    for (int i = 0; i < rows; i++) {
+        data[i] = from->data[0] + (row_offset + i) * from->stride + col_offset; // Point to the correct row and column
+    }
+    (*mat)->block = from->block; // Share the same block of data
+    (*mat)->data = data;
+    (*mat)->rows = rows;
+    (*mat)->cols = cols;
+    (*mat)->stride = from->stride; // Maintain the same stride as the parent matrix
+    (*mat)->parent = from;
+    (*mat)->is_1d = (rows == 1 || cols == 1) ? 1 : 0;
+    from->ref_cnt[0]++; // Increment reference count of the all ref matrix
+    (*mat)->ref_cnt = from->ref_cnt; // Initialize reference count pointer to the same as the parent matrix
+
+    return 0; // Success
 }
 
 /*
@@ -82,6 +168,20 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int row_offset, int col_offs
  */
 void deallocate_matrix(matrix *mat) {
     /* TODO: YOUR CODE HERE */
+    if (mat == NULL) {
+        return ; // Nothing to deallocate
+    }
+
+    mat->ref_cnt[0]--; // Decrement reference count
+    free(mat->data);
+
+    if (mat->ref_cnt[0] == 0) {
+        // No other matrices are referring to this data array, free it 
+        free(mat->block);
+        free(mat->ref_cnt);
+    }
+
+    free(mat); // Free the matrix struct itself
 }
 
 /*
@@ -90,6 +190,7 @@ void deallocate_matrix(matrix *mat) {
  */
 double get(matrix *mat, int row, int col) {
     /* TODO: YOUR CODE HERE */
+    return mat->data[row][col];
 }
 
 /*
@@ -98,6 +199,7 @@ double get(matrix *mat, int row, int col) {
  */
 void set(matrix *mat, int row, int col, double val) {
     /* TODO: YOUR CODE HERE */
+    mat->data[row][col] = val;
 }
 
 /*
@@ -105,6 +207,11 @@ void set(matrix *mat, int row, int col, double val) {
  */
 void fill_matrix(matrix *mat, double val) {
     /* TODO: YOUR CODE HERE */
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            mat->data[i][j] = val;
+        }
+    }
 }
 
 /*
@@ -113,6 +220,22 @@ void fill_matrix(matrix *mat, double val) {
  */
 int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     /* TODO: YOUR CODE HERE */
+    if (mat1->rows != mat2->rows || mat1->cols != mat2->cols) {
+        PyErr_SetString(PyExc_ValueError, "Matrix dimensions must match for addition.");
+        return -1; // Dimension mismatch
+    }
+
+    if (result->rows != mat1->rows || result->cols != mat1->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrices.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+    for (int i = 0; i < mat1->rows; i++) {
+        for (int j = 0; j < mat1->cols; j++) {
+            result->data[i][j] = mat1->data[i][j] + mat2->data[i][j];
+        }
+    }
+    return 0; // Success
 }
 
 /*
@@ -121,6 +244,23 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     /* TODO: YOUR CODE HERE */
+    if (mat1->rows != mat2->rows || mat1->cols != mat2->cols) {
+        PyErr_SetString(PyExc_ValueError, "Matrix dimensions must match for subtraction.");
+        return -1; // Dimension mismatch
+    }
+
+    if (result->rows != mat1->rows || result->cols != mat1->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrices.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+
+    for (int i = 0; i < mat1->rows; i++) {
+        for (int j = 0; j < mat1->cols; j++) {
+            result->data[i][j] = mat1->data[i][j] - mat2->data[i][j];
+        }
+    }
+    return 0; // Success
 }
 
 /*
@@ -130,6 +270,25 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     /* TODO: YOUR CODE HERE */
+    if (mat1->cols != mat2->rows) {
+        PyErr_SetString(PyExc_ValueError, "Matrix dimensions are not compatible for multiplication.");
+        return -1; // Dimension mismatch
+    }
+
+    if (result->rows != mat1->rows || result->cols != mat2->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match the product of input matrices.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+    for(int i = 0; i < mat1->rows; i++) {
+        for (int j = 0; j < mat2->cols; j++) {
+            result->data[i][j] = 0; 
+            for (int k = 0; k < mat1->cols; k++) {
+                result->data[i][j] += mat1->data[i][k] * mat2->data[k][j];
+            }
+        }
+    }
+    return 0; // Success
 }
 
 /*
@@ -139,6 +298,58 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int pow_matrix(matrix *result, matrix *mat, int pow) {
     /* TODO: YOUR CODE HERE */
+
+    if (mat->rows != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Matrix must be square for exponentiation.");
+        return -1; // Not a square matrix
+    }
+
+    if (pow < 0) {
+        PyErr_SetString(PyExc_ValueError, "Exponent must be non-negative.");
+        return -1; // Negative exponent not supported
+    }
+
+    if (result->rows != mat->rows || result->cols != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrix.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+    matrix *tmp; 
+
+    int flag = allocate_matrix(&tmp, mat->rows, mat->cols);
+    if (flag != 0) {
+        return flag; // Allocation failed
+    }
+
+    // convert mat to I matrix
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            if (i == j) {
+                result->data[i][j] = 1.0;
+            } else {
+                result->data[i][j] = 0.0;
+            }
+        }
+    }
+
+
+
+    for (int i = 0; i < pow; i++) {
+        flag = mul_matrix(tmp, result, mat);
+        if (flag != 0) {
+            deallocate_matrix(tmp);
+            return -1; 
+        }
+
+        // Update result to the new product
+        for (int r = 0; r < mat->rows; r++) {
+            for (int c = 0; c < mat->cols; c++) {
+                result->data[r][c] = tmp->data[r][c];
+            }
+        }
+    }
+    deallocate_matrix(tmp);
+    return 0;
 }
 
 /*
@@ -147,6 +358,19 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
  */
 int neg_matrix(matrix *result, matrix *mat) {
     /* TODO: YOUR CODE HERE */
+
+    if (result->rows != mat->rows || result->cols != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrix.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            result->data[i][j] = -mat->data[i][j];
+        }
+    }
+    return 0; // Success
+
 }
 
 /*
@@ -155,5 +379,21 @@ int neg_matrix(matrix *result, matrix *mat) {
  */
 int abs_matrix(matrix *result, matrix *mat) {
     /* TODO: YOUR CODE HERE */
+
+    if (result->rows != mat->rows || result->cols != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrix.");
+        return -1; // Result matrix dimension mismatch
+    }
+
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            if (mat->data[i][j] < 0) {
+                result->data[i][j] = -mat->data[i][j];
+            } else {
+                result->data[i][j] = mat->data[i][j];
+            }
+        }
+    }
+    return 0; // Success
 }
 

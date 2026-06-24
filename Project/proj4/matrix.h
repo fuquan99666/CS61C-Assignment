@@ -3,10 +3,14 @@
 typedef struct matrix {
     int rows;      	// number of rows
     int cols;      	// number of columns
+
     double **data; 	// each element is a pointer to a row of data
+    double *block;  // the block of the initial data 
+    int stride;   	// the stride of the block
+
     int is_1d;     	// Whether this matrix is a 1d matrix
     // For 1D matrix, shape is (rows * cols)
-    int ref_cnt;
+    int* ref_cnt;
     struct matrix *parent;
 } matrix;
 
