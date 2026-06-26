@@ -27,5 +27,6 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2);
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2);
 int mul_matrix(matrix *result, matrix *mat1, matrix *mat2);
 int pow_matrix(matrix *result, matrix *mat, int pow);
+int pow_matrix_1(matrix *result, matrix *mat, int pow);
 int neg_matrix(matrix *result, matrix *mat);
 int abs_matrix(matrix *result, matrix *mat);

@@ -42,7 +42,9 @@ void rand_matrix(matrix *result, unsigned int seed, double low, double high) {
     srand(seed);
     for (int i = 0; i < result->rows; i++) {
         for (int j = 0; j < result->cols; j++) {
-            set(result, i, j, rand_double(low, high));
+            // set(result, i, j, rand_double(low, high));
+            // directly access the data array to avoid function call overhead
+            result->data[i][j] = rand_double(low, high);
         }
     }
 }
@@ -190,6 +192,7 @@ void deallocate_matrix(matrix *mat) {
  */
 double get(matrix *mat, int row, int col) {
     /* TODO: YOUR CODE HERE */
+
     return mat->data[row][col];
 }
 
@@ -199,6 +202,11 @@ double get(matrix *mat, int row, int col) {
  */
 void set(matrix *mat, int row, int col, double val) {
     /* TODO: YOUR CODE HERE */
+    if (row < 0 || row >= mat->rows || col < 0 || col >= mat->cols) {
+        PyErr_SetString(PyExc_IndexError, "Index out of range for matrix  zzzz.");
+        return; // Invalid index
+    }
+
     mat->data[row][col] = val;
 }
 
@@ -280,14 +288,56 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         return -1; // Result matrix dimension mismatch
     }
 
-    for(int i = 0; i < mat1->rows; i++) {
+    // for(int i = 0; i < mat1->rows; i++) {
+    //     for (int j = 0; j < mat2->cols; j++) {
+    //         result->data[i][j] = 0;
+    //         for (int k = 0; k < mat1->cols; k++) {
+    //             result->data[i][j] += mat1->data[i][k] * mat2->data[k][j];
+    //         }
+    //     }
+    // }
+
+    // i - k - j loop order is more cache friendly
+
+    for (int i = 0; i < mat1->rows; i++) {
         for (int j = 0; j < mat2->cols; j++) {
-            result->data[i][j] = 0; 
-            for (int k = 0; k < mat1->cols; k++) {
-                result->data[i][j] += mat1->data[i][k] * mat2->data[k][j];
-            }
+            result->data[i][j] = 0; // Initialize the result element
         }
     }
+
+    // use OpenMP to parallelize the outer loop for better performance on large matrices
+    omp_set_num_threads(8); // Use maximum available threads
+
+
+    #pragma omp parallel for 
+    for (int i = 0; i < mat1->rows; i++) {
+
+        double *mat1_row = mat1->data[i];
+        double *result_row = result->data[i];
+
+        for (int k = 0; k < mat1->cols; k++) {
+            double mat1_val = mat1_row[k];
+            double *mat2_row = mat2->data[k];
+
+            __m256d temp = _mm256_set1_pd(mat1_val); 
+
+            int T = mat2->cols / 4 * 4; // Number of complete 4-element blocks
+
+            for (int j = 0; j < T; j += 4) {
+                __m256d mat2_vec = _mm256_loadu_pd(&mat2_row[j]);
+                __m256d result_vec = _mm256_loadu_pd(&result_row[j]);
+                result_vec = _mm256_fmadd_pd(temp, mat2_vec, result_vec); // result_vec += temp * mat2_vec
+                _mm256_storeu_pd(&result_row[j], result_vec);
+            }
+
+            // Handle any remaining elements
+            for (int j = T; j < mat2->cols; j++) {
+                result->data[i][j] += mat1_val * mat2_row[j];
+            }
+            
+        }
+    }
+
     return 0; // Success
 }
 
@@ -296,7 +346,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  * Return 0 upon success and a nonzero value upon failure.
  * Remember that pow is defined with matrix multiplication, not element-wise multiplication.
  */
-int pow_matrix(matrix *result, matrix *mat, int pow) {
+int pow_matrix_1(matrix *result, matrix *mat, int pow) {
     /* TODO: YOUR CODE HERE */
 
     if (mat->rows != mat->cols) {
@@ -348,6 +398,100 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
             }
         }
     }
+
+    deallocate_matrix(tmp);
+    return 0;
+}
+
+int pow_matrix(matrix *result, matrix *mat, int pow) {
+    if (mat->rows != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Matrix must be square for exponentiation.");
+        return -1;
+    }
+    if (pow < 0) {
+        PyErr_SetString(PyExc_ValueError, "Exponent must be non-negative.");
+        return -1;
+    }
+    if (result->rows != mat->rows || result->cols != mat->cols) {
+        PyErr_SetString(PyExc_ValueError, "Result matrix dimensions must match input matrix.");
+        return -1;
+    }
+
+    // pow == 0：单位矩阵
+    if (pow == 0) {
+        for (int i = 0; i < mat->rows; i++) {
+            for (int j = 0; j < mat->cols; j++) {
+                result->data[i][j] = (i == j) ? 1.0 : 0.0;
+            }
+        }
+        return 0;
+    }
+
+    // 分配临时矩阵
+    matrix *base, *tmp;
+    if (allocate_matrix(&base, mat->rows, mat->cols) != 0) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate base matrix.");
+        return -1;
+    }
+    if (allocate_matrix(&tmp, mat->rows, mat->cols) != 0) {
+        deallocate_matrix(base);
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate tmp matrix.");
+        return -1;
+    }
+
+    // base = mat（复制原始矩阵）
+    #pragma omp parallel for
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            base->data[i][j] = mat->data[i][j];
+        }
+    }
+
+    // result = I（单位矩阵）
+    #pragma omp parallel for
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            result->data[i][j] = (i == j) ? 1.0 : 0.0;
+        }
+    }
+
+    // 快速幂核心
+    int e = pow;
+    while (e > 0) {
+        if (e & 1) {
+            // result = result * base
+            if (mul_matrix(tmp, result, base) != 0) {
+                deallocate_matrix(base);
+                deallocate_matrix(tmp);
+                return -1;
+            }
+            // 复制 tmp 到 result
+            #pragma omp parallel for
+            for (int i = 0; i < mat->rows; i++) {
+                for (int j = 0; j < mat->cols; j++) {
+                    result->data[i][j] = tmp->data[i][j];
+                }
+            }
+        }
+
+        // base = base * base
+        if (mul_matrix(tmp, base, base) != 0) {
+            deallocate_matrix(base);
+            deallocate_matrix(tmp);
+            return -1;
+        }
+        // 复制 tmp 到 base
+        #pragma omp parallel for
+        for (int i = 0; i < mat->rows; i++) {
+            for (int j = 0; j < mat->cols; j++) {
+                base->data[i][j] = tmp->data[i][j];
+            }
+        }
+
+        e >>= 1;  // 右移一位
+    }
+
+    deallocate_matrix(base);
     deallocate_matrix(tmp);
     return 0;
 }
